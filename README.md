@@ -70,55 +70,64 @@ CREATE TABLE employee (
 ```
 
 # Database Queries
+
+### UPDATE employee Roles
 ```
--- UPDATE employee Roles
 USE companyDB;
 UPDATE employee
 SET roles_id=4
 WHERE id=1;
-
--- UPDATE employee manager
+```
+### UPDATE employee manager
+```
 USE companyDB;
 UPDATE employee
 SET manager_id=4
 WHERE id=1;
-
--- DELETE employee
+```
+### DELETE employee
+```
 USE companyDB;
 DELETE FROM employee
 WHERE id=1;
-
--- DELETE roles
+```
+### DELETE roles
+```
 USE companyDB;
 DELETE FROM roles
 WHERE id=1;
-
--- DELETE department
+```
+### DELETE department
+```
 USE companyDB;
 DELETE FROM department
 WHERE id=1;
-
--- query all employee
+```
+### query all employee
+```
 USE companyDB;
 select * from employee;
-
--- query all roles
+```
+### query all roles
+```
 USE companyDB;
 select * from roles;
-
--- query all department
+```
+### query all department
+```
 USE companyDB;
 select * from department;
-
--- query view all employee details
+```
+### query view all employee details
+```
 USE companyDB;
 select * 
 from employee e
 left join  employee m
 on e.manager_id=m.id;
-
-
--- query view total utilized budget => total salaries by department
+```
+### query view total utilized budget => total salaries by department
+```
 USE companyDB;
 select d.name 'Department Name', sum(r.salary) 'Utilized Budget'
 from employee e
@@ -127,6 +136,17 @@ on e.roles_id=r.id
 join department d
 on r.department_id=d.id
 where r.department_id=4;
+```
+### query to get all managers
+```
+use companyDB;
+select *
+from employee
+where id in (
+select distinct manager_id
+from employee
+where manager_id is not null)
+or manager_id is null;
 ```
 
 # Video

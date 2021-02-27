@@ -113,3 +113,13 @@ on e.roles_id=r.id
 join department d
 on r.department_id=d.id
 where r.department_id=4;
+
+-- query to get all managers
+use companyDB;
+select *
+from employee
+where id in (
+select distinct manager_id
+from employee
+where manager_id is not null)
+or manager_id is null;
