@@ -2,10 +2,10 @@ const mysql = require('mysql');
 const { prompt } = require('inquirer');
 const figlet = require('figlet');
 
-let listEmp=[];
-let listRoles=[];
-let listDept=[];
-let listMgr=[];
+var listEmp=[];
+var listRoles=[];
+var listDept=[];
+var listMgr=[];
 
 const connection = mysql.createConnection({
   host: 'localhost',
@@ -21,8 +21,16 @@ const connection = mysql.createConnection({
   database: 'companyDB',
 });
 
+connection.connect((err) => {
+    if (err) throw err;
+    console.log(`connected as id ${connection.threadId}`);
+    start();
+    AskQuestions();
+});
+
+
 //query all data per tables
-const viewTable = (table) => {
+function viewTable(table) {
     const query=`SELECT * FROM ${table}`;
     connection.query(query, (err, res) => {
       if (err) throw err;
@@ -33,15 +41,13 @@ const viewTable = (table) => {
   };
 
 //query INSERT INTO tables
-const insertTable = (table) => {
+function insertTable(table) {
     var queryEmp = 'INSERT INTO employee (first_name, last_name, roles_id, manager_id) VALUES (';
     var queryRoles = 'INSERT INTO roles (title, salary, department_id) VALUES (';
     var queryDept = 'INSERT INTO department (name) VALUES (';
-
+    
     switch (table) {
         case 'Employee':
-            queryListEmp();
-            queryListMgr();
             prompt([
                 {
                   type: 'input',
@@ -78,7 +84,6 @@ const insertTable = (table) => {
             });
             break;
         case 'Roles':
-            queryListDept();
             prompt([
                 {
                     type: 'input',
@@ -128,7 +133,7 @@ const insertTable = (table) => {
 };
 
 //query UPDATE tables
-const updateRoles = () => {
+function updateRoles () {
     connection.query('SELECT id, first_name, last_name FROM employee', (err, res) => {
         if (err) throw err;
         prompt([
@@ -167,14 +172,14 @@ const updateRoles = () => {
 };
 
 //query DELETE tables
-const deleteTable = (table) => {
-    var queryEmp = 'DELETE FROM employee WHERE id=';
-    var queryRoles = 'DELETE FROM roles WHERE id=';
-    var queryDept = 'DELETE FROM department WHERE id=';
-
+function deleteTable(table) {
+    var queryDelEmp = 'DELETE FROM employee WHERE id=';
+    var queryDelRoles = 'DELETE FROM roles WHERE id=';
+    var queryDelDept = 'DELETE FROM department WHERE id=';
+    
     switch (table) {
-        case 'employee':
-            queryListEmp();
+        case 'Employee':
+            console.log(listEmp);
             prompt([
                 {
                     type: 'list',
@@ -184,16 +189,16 @@ const deleteTable = (table) => {
                 }
             ]).then(response => {
                 var empId=response.emp.substring(0,response.emp.indexOf('-')-1);
-                queryEmp += `${empId})`;
-                connection.query(queryEmp, (err, res) => {
+                queryDelEmp += `${empId}`;
+                connection.query(queryDelEmp, (err, res) => {
                     if (err) throw err;
                     console.log("1 record deleted in Employee");
                     AskQuestions();        
                 });
             });
             break;
-        case 'roles':
-            queryListRoles();
+        case 'Roles':
+            console.log(listRoles);
             prompt([
                 {
                     type: 'list',
@@ -203,16 +208,16 @@ const deleteTable = (table) => {
                 }
             ]).then(response => {
                 var roleId=response.role.substring(0,response.role.indexOf('-')-1);
-                queryRoles += `${roleId})`;
-                connection.query(queryRoles, (err, res) => {
+                queryDelRoles += `${roleId}`;
+                connection.query(queryDelRoles, (err, res) => {
                     if (err) throw err;
                     console.log("1 record deleted in Roles");
                     AskQuestions();        
                 });
             });
             break;
-        case 'department':
-            queryListDept();
+        case 'Department':
+            console.log(listDept);
             prompt([
                 {
                     type: 'list',
@@ -222,8 +227,8 @@ const deleteTable = (table) => {
                 }
             ]).then(response => {
                 var deptId=response.dept.substring(0,response.dept.indexOf('-')-1);
-                queryDept += `${deptId})`;
-                connection.query(queryDept, (err, res) => {
+                queryDelDept += `${deptId}`;
+                connection.query(queryDelDept, (err, res) => {
                     if (err) throw err;
                     console.log("1 record deleted in Department");
                     AskQuestions();        
@@ -234,14 +239,6 @@ const deleteTable = (table) => {
             break;
     }
 };
-
-start();
-
-connection.connect((err) => {
-    if (err) throw err;
-    console.log(`connected as id ${connection.threadId}`);
-    AskQuestions();
-});
 
 function start(){
     figlet.text('Employee Tracker !!', {
@@ -260,7 +257,7 @@ function start(){
     });};
 
 function AskQuestions(){
-    // getLists();
+    getLists();
     prompt([
         {
             type: 'list',
@@ -287,14 +284,14 @@ function AskQuestions(){
                 break;                                                
             case 'Q - Quit':
                 connection.end();
-            break;                                                
+                break;                                                
             default:
                 break;
         }
     });
 };
 
-const commonQuestion = (param) =>  {
+function commonQuestion(param) {
     const objReturn={
         type: 'list',
         message: `${param} for Which Table?`,
@@ -305,7 +302,7 @@ const commonQuestion = (param) =>  {
 };
 
 function askCreate(){
-    prompt([commonQuestion('View')]).then(response => {
+    prompt([commonQuestion('Insert')]).then(response => {
         insertTable(response.table);
     });
 };
@@ -328,41 +325,38 @@ function askDelete(){
     });
 };
 
-// function getLists() {
-const queryListEmp= () => {
+function getLists() {
+    listEmp=[];
     connection.query('SELECT * FROM employee', (err, res) => {
       if (err) throw err;
       // console.log('Table Employee:');
       for (i=0;i<res.length;i++) {
         listEmp.push(`${res[i].id} - ${res[i].first_name} ${res[i].last_name}`);
       };
+    //   console.log('getLists: EMP=' + listEmp);
     });
-    return listEmp;
-};
-
-const queryListRoles= () => {
+    
+    listRoles=[];
     connection.query('SELECT * FROM roles', (err, res) => {
       if (err) throw err;
       // console.log('Table Employee:');
       for (i=0;i<res.length;i++) {
         listRoles.push(`${res[i].id} - ${res[i].title}`);
       };
+    //   console.log('getLists: ROLE=' + listRoles);
     });
-    return listRoles;
-};
 
-const queryListDept= () => {
+    listDept=[];
     connection.query('SELECT * FROM department', (err, res) => {
       if (err) throw err;
       // console.log('Table Employee:');
       for (i=0;i<res.length;i++) {
         listDept.push(`${res[i].id} - ${res[i].name}`);
       };
+    //   console.log('getLists: DEPT=' + listDept);
     });
-    return listDept;
-};
 
-const queryListMgr= () => {
+    listMgr=[];
     const myQueryMgr='select * from employee where id in ( select distinct manager_id from employee where manager_id is not null) or manager_id is null';
     connection.query(myQueryMgr, (err, res) => {
       if (err) throw err;
@@ -372,7 +366,6 @@ const queryListMgr= () => {
       };
       //adding no manager
       listMgr.push('N - No Manager');
+    //   console.log('getLists: MGR=' + listMgr);
     });
-    return listMgr;
 };
-// }
