@@ -40,7 +40,7 @@ function viewTable(table) {
     });
   };
 
-//query INSERT INTO tables
+// query INSERT INTO tables
 function insertTable(table) {
     var queryEmp = 'INSERT INTO employee (first_name, last_name, roles_id, manager_id) VALUES (';
     var queryRoles = 'INSERT INTO roles (title, salary, department_id) VALUES (';
@@ -133,42 +133,173 @@ function insertTable(table) {
 };
 
 //query UPDATE tables
-function updateRoles () {
-    connection.query('SELECT id, first_name, last_name FROM employee', (err, res) => {
-        if (err) throw err;
-        prompt([
-            {
-                type: 'list',
-                message: 'Select the Employee to be updated',
-                choices() {
-                    let empArray=[];
-                    for (i=0;i<res.length;i++) {
-                        empArray.push(`${res[i].id} - ${res[i].first_name} ${res[i].last_name}`);
+function updateTable(table) {
+    var queryUptEmp = 'UPDATE employee SET ';
+    var queryUptRoles = 'UPDATE roles SET ';
+    var queryUptDept = 'UPDATE department SET ';
+    
+    switch (table) {
+        case 'Employee':
+            prompt([
+                {
+                    type: 'list',
+                    message: 'Select the Employee to be update',
+                    choices: listEmp,
+                    name: 'emp'
+                }
+            ]).then(response => {
+                prompt([
+                    {
+                        type: 'list',
+                        message: 'Select the field to be updated',
+                        choices: ['first_name','last_name','role','manager'],
+                        name: 'choix'
+                    },
+                ]).then(reponse => {
+                    console.log(response.emp);
+                    console.log(reponse.choix);
+                    if (reponse.choix === 'role') {
+                        console.log(listRoles);
+                        prompt([
+                            {
+                                type: 'list',
+                                message: 'Select the new Role',
+                                choices: listRoles,
+                                name: 'role'
+                            }
+                        ]).then(answer => {
+                            var roleId=answer.role.substring(0,answer.role.indexOf('-')-1);
+                            queryUptEmp += `roles_id = ${roleId} `
+                            var empId=response.emp.substring(0,response.emp.indexOf('-')-1);
+                            queryUptEmp += `WHERE id=${empId}`;
+                            connection.query(queryUptEmp, (err, res) => {
+                                if (err) throw err;
+                                console.log("1 record updated in Employee");
+                                AskQuestions();        
+                            });
+                        });
+                    } else if (reponse.choix === manager) {
+                        prompt([
+                            {
+                                type: 'list',
+                                message: 'Select the new Manager',
+                                choices: listMgr,
+                                name: 'mgr'
+                            }
+                        ]).then(answer => {
+                            var mgrId=answer.mgr.substring(0,answer.mgr.indexOf('-')-1);
+                            queryUptEmp += `manager_id = ${mgrId} `
+                            var empId=response.emp.substring(0,response.emp.indexOf('-')-1);
+                            queryUptEmp += `WHERE id=${empId}`;
+                            connection.query(queryUptEmp, (err, res) => {
+                                if (err) throw err;
+                                console.log("1 record updated in Employee");
+                                AskQuestions();        
+                            });
+                        });
+                        
+                    } else {
+                        prompt([
+                            {
+                                type: 'input',
+                                message: 'Enter the new value',
+                                name: 'value'
+                            }
+                        ]).then(answer => {
+                            queryUptEmp += `${reponse.choix} = ${answer.value} `
+                            var empId=response.emp.substring(0,response.emp.indexOf('-')-1);
+                            queryUptEmp += `WHERE id=${empId}`;
+                            connection.query(queryUptEmp, (err, res) => {
+                                if (err) throw err;
+                                console.log("1 record updated in Employee");
+                                AskQuestions();        
+                            });
+                        });
+                    };
+                });    
+            });
+            break;
+        case 'Roles':
+            prompt([
+                {
+                    type: 'list',
+                    message: 'Select the Role to be updated',
+                    choices: listRoles,
+                    name: 'role'
+                }
+            ]).then(response => {
+                prompt([
+                    {
+                        type: 'list',
+                        message: 'Select the field to update',
+                        choices: ['salary','departement'],
+                        name: 'choix'
                     }
-                    return empArray;
+                ]).then(reponse => {
+                    if (reponse.choix === 'salary'){
+                        prompt([
+                            {
+                                typer: 'input',
+                                message: 'Enter the new salary',
+                                name: 'salary'
+                            }
+                        ]).then(answer => {
+                            var roleId=response.role.substring(0,response.role.indexOf('-')-1);
+                            queryUptRoles += ` salary=${answer.salary} where id=${roleId}`
+                            connection.query(queryUptRoles, (err, res) => {
+                                if (err) throw err;
+                                console.log("1 record updated in Roles");
+                                AskQuestions();        
+                            });
+                        });
+                    } else {
+                        prompt([
+                            {
+                                type: 'list',
+                                message: 'Select the new departement',
+                                choices: listDept,
+                                name: 'dept'
+                            }
+                        ]).then(answer => {
+                            var roleId=response.role.substring(0,response.role.indexOf('-')-1);
+                            var deptId=answer.dept.substring(0,answer.dept.indexOf('-')-1);
+                            queryUptRoles += ` department_id=${deptId} WHERE id=${roleId}`
+                            connection.query(queryUptRoles, (err, res) => {
+                                if (err) throw err;
+                                console.log("1 record updated in Roles");
+                                AskQuestions();        
+                            });
+                        });
+                    };
+                });
+            });
+            break;
+        case 'Department':
+            prompt([
+                {
+                    type: 'list',
+                    message: 'Select the department to be updated',
+                    choices: listDept,
+                    name: 'dept'
                 },
-                name: 'emp'
-            },
-            {
-                type: 'input',
-                message: 'What is the role ID?',
-                name: 'roleId'
-            }
-        ]).then(response => {
-            const empId=response.emp.substring(0,response.emp.indexOf('-')-1);
-            var sql = "UPDATE employee SET roles_id = ? WHERE id = ?";
-            // console.log(response.emp.indexOf('-'));
-            // console.log(response.emp[0]);
-            // console.log(response.emp.substring(0,1));
-            // console.log(`id selected= ${empId}`);
-            connection.query(sql, [ response.roleId, empId],function (err, result) {
-                if (err) throw err;
-                console.log(result.affectedRows + " record(s) updated");
-            }); 
-            AskQuestions();
-            // connection.end();
-        });
-    });
+                {
+                    type: 'input',
+                    message: 'What is the new name?',
+                    name: 'name'
+                }
+            ]).then(response => {
+                var deptId=response.dept.substring(0,response.dept.indexOf('-')-1);
+                queryUptDept += `name='${response.name}' WHERE id=${deptId}`
+                connection.query(queryUptDept, (err, res) => {
+                    if (err) throw err;
+                    console.log("1 record updated in Department");
+                    AskQuestions();        
+                });
+            });
+            break;
+        default:
+            break;
+    }
 };
 
 //query DELETE tables
@@ -179,7 +310,7 @@ function deleteTable(table) {
     
     switch (table) {
         case 'Employee':
-            console.log(listEmp);
+            // console.log(listEmp);
             prompt([
                 {
                     type: 'list',
@@ -198,7 +329,7 @@ function deleteTable(table) {
             });
             break;
         case 'Roles':
-            console.log(listRoles);
+            // console.log(listRoles);
             prompt([
                 {
                     type: 'list',
@@ -217,7 +348,7 @@ function deleteTable(table) {
             });
             break;
         case 'Department':
-            console.log(listDept);
+            // console.log(listDept);
             prompt([
                 {
                     type: 'list',
