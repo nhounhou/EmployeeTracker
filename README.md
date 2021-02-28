@@ -8,6 +8,7 @@ Solution for managing a company's employees using node, inquirer, and MySQL.
 - [Launch App](#launch-app)
 - [Database Schema](#database-schema)
 - [Database Queries](#database-queries)
+- [My take](#my-take)
 - [Video](#video)
 
 # User Story
@@ -103,15 +104,13 @@ USE companyDB;
 DELETE FROM department
 WHERE id=1;
 ```
-### query all employee
-```
-USE companyDB;
-select * from employee;
-```
 ### query all roles
 ```
 USE companyDB;
-select * from roles;
+select r.id, r.title, r.salary, d.name
+from roles r
+left join department d
+on r.department_id = d.id;
 ```
 ### query all department
 ```
@@ -121,10 +120,12 @@ select * from department;
 ### query view all employee details
 ```
 USE companyDB;
-select * 
-from employee e
-left join  employee m
-on e.manager_id=m.id;
+select employee.id, employee.first_name, employee.last_name, roles.title, m.first_name, m.last_name from employee
+join roles
+on employee.roles_id = roles.id
+join employee m
+on employee.manager_id = m.id;
+
 ```
 ### query view total utilized budget => total salaries by department
 ```
@@ -148,5 +149,14 @@ from employee
 where manager_id is not null)
 or manager_id is null;
 ```
+# My take
+For each CRUD, user is ask to choose which table to operate uppon.  
+Also each time there is a choice a list is presented to the user for selection, like the role, department or manager list.
+This option made the main file (`companyData.js`) quite big because of all the differents options.
+
+One improvement is to seperate that file into smaller ones and exports the functions but that will require as new logic, because of the function been called by multiple other functions.
 
 # Video
+The video presentation is focusing on the CRUD operations on the Employee table. The other tables would work just as well, this is to have a shorter video length.  
+
+![video](assets/images/EmployeeTracker.gif)

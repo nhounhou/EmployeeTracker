@@ -6,6 +6,7 @@ var listEmp=[];
 var listRoles=[];
 var listDept=[];
 var listMgr=[];
+var query='';
 
 const connection = mysql.createConnection({
   host: 'localhost',
@@ -31,12 +32,18 @@ connection.connect((err) => {
 
 //query all data per tables
 function viewTable(table) {
-    const query=`SELECT * FROM ${table}`;
+    if (table === 'Employee'){
+        query=`select e.id,e.first_name,e.last_name,r.title, m.first_name 'manager first name', m.last_name 'manager last name' from employee e left join employee m on e.manager_id = m.id join roles r on e.roles_id = r.id`;
+    } else if (table === 'Roles'){
+        query=`select r.id, r.title, r.salary, d.name 'Department name' from roles r left join department d on r.department_id = d.id`;
+    } else {
+        query=`SELECT * FROM ${table}`;
+    };
     connection.query(query, (err, res) => {
-      if (err) throw err;
-      // console.log('Table Employee:');
-      console.table(res);
-      AskQuestions();
+    if (err) throw err;
+    // console.log('Table Employee:');
+    console.table(res);
+    AskQuestions();
     });
   };
 
@@ -453,6 +460,57 @@ function askUpdate(){
 function askDelete(){
     prompt([commonQuestion('Delete')]).then(response => {
         deleteTable(response.table);
+    });
+};
+
+function sqlQueries(){
+    prompt([
+        {
+            type: 'rawlist',
+            message: 'Which query do you want to run?',
+            choices: ['Utilised Budget','Employee by Manager'],
+            name: 'query'
+        }
+    ]).then(response => {
+        if (response.query === 'Utilised Budget') {
+            prompt([
+                {
+                    type: 'list',
+                    message: 'Which Department?',
+                    choices: listDept,
+                    name: 'dept'
+                }
+            ]).then(reponse => {
+                var deptId=reponse.dept.substring(0,reponse.dept.indexOf('-')-1);
+                query = `select d.name 'Department Name', sum(r.salary) 'Utilized Budget' from employee e join roles r on e.roles_id=r.id join department d on r.department_id=d.id where r.department_id=${deptId}`;
+                connection.query(query, (err, res) => {
+                    if (err) throw err;
+                    console.table(res);
+                    console.log(`Query ${response.query} executed`);
+                    AskQuestions();        
+                });
+            });
+        } else {
+            prompt([
+                {
+                    type: 'list',
+                    message: 'Select the manager',
+                    choices: listMgr,
+                    name: 'mgr'
+                }
+            ]).then(reponse => {
+                var mgrId=reponse.mgr.substring(0,reponse.mgr.indexOf('-')-1);
+                query =`select e.id,e.first_name,e.last_name,r.title, m.first_name, m.last_name from employee e join employee m on e.manager_id = m.id join roles r on e.roles_id = r.id where e.manager_id=${mgrId}`;
+                connection.query(query, (err, res) => {
+                    if (err) throw err;
+                    // console.log(query);
+                    console.table(res);
+                    console.log(`Query ${response.query} executed`);
+                    AskQuestions();        
+                });    
+            });
+
+        };
     });
 };
 
